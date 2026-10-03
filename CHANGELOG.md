@@ -31,4 +31,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Protocol-driven audit sinks in `kua.audit.sinks`: `LocalJsonlSink` (append-only with fsync), `CloudWatchSink` (CloudWatch limits-aware batching, retry with exponential backoff, and optional log group creation), and `MultiSink` (multi-target fan-out and fail-loud semantics).
 - `AuditLogger` orchestrator and `new_run_id` generator in `kua.audit.logger` with buffering and context manager support.
 - Comprehensive unit test suites in `tests/unit/audit/test_chain.py`, `tests/unit/audit/test_redact.py`, `tests/unit/audit/test_sinks.py`, and `tests/unit/audit/test_logger.py`.
+- `make_boto_session` and `caller_identity` in `kua.providers.eks.session` for regional session initialization, STS role assumption (`kua-scan`), and caller identity resolution for audit events.
+- `get_eks_token` in `kua.providers.eks.auth` generating pre-signed STS Bearer tokens with `x-k8s-aws-id` header mirroring `aws eks get-token` (14m refresh horizon).
+- `build_k8s_api_client` in `kua.providers.eks.auth` for in-process EKS endpoint & CA resolution, temporary certificate management with `atexit` cleanup, and token auto-refresh hook (`TokenRefresher`).
+- Actionable `AuthError` reporting for `eks:DescribeCluster` permission denial, HTTP 401 unauthorized (unmapped IAM principal), and private cluster connection timeouts.
+- `check_k8s_access` in `kua.providers.eks.auth` checking required scanner permissions via Kubernetes `SelfSubjectAccessReview`.
+- Comprehensive unit test suites in `tests/unit/providers/eks/test_session.py` and `tests/unit/providers/eks/test_auth.py`.
+
 
