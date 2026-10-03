@@ -24,3 +24,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Kubernetes version parsing and arithmetic in `kua.core.versions` (`MinorVersion`, `upgrade_path`, `kubelet_skew_ok`, `max_skew_after_hop`).
 - Extended exception hierarchy with `VersionError`, `CollectorError`, and `AuthError` in `kua.core.errors`.
 - Comprehensive unit test suites in `tests/unit/core/test_models.py` and `tests/unit/core/test_versions.py`.
+- `AuditError` exception in `kua.core.errors` (re-exported in `kua.core`).
+- Audit event definitions (`AuditEventType`, `AuditEvent`) in `kua.audit.events` with UTC ISO8601 timestamps and Pydantic v2 immutability.
+- Deterministic canonical JSON serialization (`canonical_json`), SHA-256 hash computation (`compute_hash`), stateful `HashChain`, and verification algorithm (`verify_chain`) in `kua.audit.chain`.
+- Recursive sensitive payload redaction (`redact`) in `kua.audit.redact` covering passwords, secrets, tokens, credentials, AWS access keys, PEM private keys, JWT tokens, environment variable lists, and string truncation.
+- Protocol-driven audit sinks in `kua.audit.sinks`: `LocalJsonlSink` (append-only with fsync), `CloudWatchSink` (CloudWatch limits-aware batching, retry with exponential backoff, and optional log group creation), and `MultiSink` (multi-target fan-out and fail-loud semantics).
+- `AuditLogger` orchestrator and `new_run_id` generator in `kua.audit.logger` with buffering and context manager support.
+- Comprehensive unit test suites in `tests/unit/audit/test_chain.py`, `tests/unit/audit/test_redact.py`, `tests/unit/audit/test_sinks.py`, and `tests/unit/audit/test_logger.py`.
+
