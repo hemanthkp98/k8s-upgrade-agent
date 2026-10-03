@@ -58,8 +58,9 @@ python_version = "3.12"
 warn_unused_configs = true
 
 [[tool.mypy.overrides]]
-module = ["kua.core.*", "kua.audit.*", "kua.rules.*", "kua.plan.*"]
+module = ["kua.core.*", "kua.audit.*", "kua.providers.*", "kua.rules.*", "kua.plan.*"]
 strict = true
+
 
 
 [[tool.mypy.overrides]]
