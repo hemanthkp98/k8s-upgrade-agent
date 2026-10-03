@@ -19,3 +19,7 @@ class CollectorError(KuaError):
 
 class AuthError(KuaError):
     """Raised when authentication or authorization with a cluster or cloud provider fails."""
+
+
+class AuditError(KuaError):
+    """Raised when audit event creation, hashing, sinking, or verification fails."""

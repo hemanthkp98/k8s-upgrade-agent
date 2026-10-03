@@ -1,6 +1,13 @@
 """Core domain models, version arithmetic, and utilities for kua."""
 
-from kua.core.errors import AuthError, CollectorError, ConfigError, KuaError, VersionError
+from kua.core.errors import (
+    AuditError,
+    AuthError,
+    CollectorError,
+    ConfigError,
+    KuaError,
+    VersionError,
+)
 from kua.core.models import (
     AddonInfo,
     ClusterRef,
@@ -22,6 +29,7 @@ from kua.core.versions import (
 
 __all__ = [
     "AddonInfo",
+    "AuditError",
     "AuthError",
     "ClusterRef",
     "ClusterSnapshot",

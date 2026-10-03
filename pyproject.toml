@@ -50,15 +50,17 @@ target-version = "py312"
 select = ["E", "F", "I", "B", "UP", "S", "SIM", "RUF"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["S101"]
+"tests/*" = ["S101", "S105", "S106"]
+
 
 [tool.mypy]
 python_version = "3.12"
 warn_unused_configs = true
 
 [[tool.mypy.overrides]]
-module = ["kua.core.*", "kua.rules.*", "kua.plan.*"]
+module = ["kua.core.*", "kua.audit.*", "kua.rules.*", "kua.plan.*"]
 strict = true
+
 
 [[tool.mypy.overrides]]
 module = ["kubernetes.*"]
