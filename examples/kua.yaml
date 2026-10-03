@@ -1,0 +1,126 @@
+# ==============================================================================
+# kua (Kubernetes Upgrade Agent) — Configuration File Example
+# ==============================================================================
+# This file illustrates all available configuration options for kua.
+# Every field is documented with its purpose, accepted values, and defaults.
+#
+# Precedence order (highest to lowest):
+#   1. CLI overrides flags / dict
+#   2. Environment variables (KUA_*, e.g. KUA_CLUSTER__NAME=my-cluster)
+#   3. YAML configuration file (e.g. this file)
+#   4. Model defaults
+# ==============================================================================
+
+# Target cluster connection and identification settings (required)
+cluster:
+  # Cloud or Kubernetes provider. Currently only 'eks' is supported.
+  # Default: "eks"
+  provider: "eks"
+
+  # Name of the Kubernetes / Amazon EKS cluster to scan or upgrade (required).
+  name: "prod-eks-01"
+
+  # AWS region where the cluster is located (required, lowercase).
+  region: "ap-south-1"
+
+  # AWS Account ID owning the cluster.
+  # Default: null (discovered via STS get-caller-identity)
+  account_id: "123456789012"
+
+  # IAM Role ARN to assume for scanning and read-only fact collection.
+  # Default: null (uses the active AWS credentials / ambient identity)
+  role_arn: "arn:aws:iam::123456789012:role/kua-scanner-role"
+
+# Amazon Bedrock LLM reasoning and risk narrative generation settings
+bedrock:
+  # AWS region for Amazon Bedrock API calls.
+  # Default: null (defaults to cluster.region if not specified)
+  region: null
+
+  # Amazon Bedrock model ID or inference profile identifier.
+  # TODO: verify current Bedrock model ID / inference profile
+  # Default: "anthropic.claude-sonnet-4-5"
+  model_id: "anthropic.claude-sonnet-4-5"
+
+  # Maximum token limit for Bedrock reasoning response generation.
+  # Default: 4096
+  max_tokens: 4096
+
+  # Sampling temperature for Bedrock reasoning (0.0 ensures deterministic outputs).
+  # Default: 0.0
+  temperature: 0.0
+
+  # Whether the Bedrock AI reasoning and risk narrative layer is enabled.
+  # Default: true
+  enabled: true
+
+  # API timeout in seconds for Amazon Bedrock API requests.
+  # Default: 120
+  timeout_seconds: 120
+
+# Hash-chained tamper-evident audit logging settings
+audit:
+  # Prefix for CloudWatch audit log group names: <prefix>/<cluster-name>
+  # Default: "/k8s-upgrade-agent"
+  log_group_prefix: "/k8s-upgrade-agent"
+
+  # Whether kua is permitted to create CloudWatch log groups if they do not exist.
+  # Safe default: false (log groups should be provisioned via Terraform/IaC)
+  create_log_group: false
+
+  # Retention period in days for CloudWatch audit log groups.
+  # Default: 365
+  retention_days: 365
+
+  # KMS Customer Managed Key (CMK) ARN to encrypt CloudWatch audit log groups.
+  # Default: null (uses default AWS CloudWatch encryption)
+  kms_key_arn: null
+
+  # Local filesystem directory where audit events are mirrored as JSONL files.
+  # Default: ".kua/audit"
+  local_mirror_dir: ".kua/audit"
+
+# Baseline metrics capture and health verification settings
+metrics:
+  # Metrics backend source: "none", "prometheus", or "cloudwatch".
+  # Default: "none"
+  source: "none"
+
+  # Base URL for Prometheus API (required when source is "prometheus").
+  # Default: null
+  # prometheus_url: "http://prometheus-k8s.monitoring.svc:9090"
+
+  # Duration window for baseline metrics collection before upgrades.
+  # Default: "24h"
+  baseline_window: "24h"
+
+  # Free-form metric check expressions evaluated during verification.
+  # Default: []
+  checks: []
+    # - "sum(rate(http_requests_total{status=~'5..'}[5m])) == 0"
+    # - "kube_node_status_condition{condition='Ready',status='true'} == 1"
+
+# Readiness scan and rule evaluation settings
+scan:
+  # Target Kubernetes minor version to evaluate (format: ^1\.\d{1,2}$, e.g. "1.31").
+  # Default: null (evaluates upgrade to the next immediate minor version)
+  target_version: "1.31"
+
+  # Namespaces excluded from workload, API deprecation, and PDB scans.
+  # Default: ["kube-node-lease"]
+  namespaces_exclude:
+    - "kube-node-lease"
+
+  # Whether to scan Helm release secrets directly for chart versions.
+  # Safe default: false (derives versions from Kubernetes labels; reading secrets is opt-in)
+  helm_release_secrets: false
+
+  # Local directory paths containing Kubernetes manifests or Helm charts to scan statically.
+  # Default: []
+  manifest_paths: []
+    # - "./deploy/manifests"
+    # - "./charts"
+
+  # Maximum findings collected per individual rule to prevent report blowup.
+  # Default: 200
+  max_findings_per_rule: 200
