@@ -37,5 +37,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Actionable `AuthError` reporting for `eks:DescribeCluster` permission denial, HTTP 401 unauthorized (unmapped IAM principal), and private cluster connection timeouts.
 - `check_k8s_access` in `kua.providers.eks.auth` checking required scanner permissions via Kubernetes `SelfSubjectAccessReview`.
 - Comprehensive unit test suites in `tests/unit/providers/eks/test_session.py` and `tests/unit/providers/eks/test_auth.py`.
+- `Provider` protocol and `get_provider` factory in `kua.providers.base` defining provider-agnostic interfaces for cluster inventory collection, versions, add-ons, node groups, and Kubernetes client construction.
+- `EksProvider` in `kua.providers.eks.provider` collecting EKS cluster metadata, normalized control plane version, platform version, managed node groups (with AL2023, custom AMI, Bottlerocket, and Windows detection), managed add-ons, and version compatibility matrices via boto3 paginators.
+- Result caching for cluster description and add-on version compatibility matrices.
+- Non-fatal error aggregation tracking API issues without breaking partial inventory collection.
+- Comprehensive unit test suites in `tests/unit/providers/test_base.py` and `tests/unit/providers/eks/test_provider.py`.
 
 
