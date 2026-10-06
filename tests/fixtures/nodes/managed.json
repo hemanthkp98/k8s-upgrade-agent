@@ -1,0 +1,24 @@
+[
+  {
+    "apiVersion": "v1",
+    "kind": "Node",
+    "metadata": {
+      "name": "ip-10-0-1-10.ec2.internal",
+      "labels": {
+        "eks.amazonaws.com/nodegroup": "mng-standard",
+        "topology.kubernetes.io/zone": "us-west-2a",
+        "node.kubernetes.io/instance-type": "m5.large"
+      }
+    },
+    "spec": {
+      "providerID": "aws:///us-west-2a/i-01111111111111111"
+    },
+    "status": {
+      "nodeInfo": {
+        "operatingSystem": "linux",
+        "osImage": "Amazon Linux 2023",
+        "kubeletVersion": "v1.30.2-eks-a1b2c3"
+      }
+    }
+  }
+]
