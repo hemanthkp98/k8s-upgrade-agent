@@ -221,7 +221,10 @@ class AddonInfo(BaseModel):
     managed_by: Literal["eks-addon", "helm", "manifest", "unknown"] = Field(
         description="Installation and lifecycle manager for this addon."
     )
-    namespace: str = Field(description="Namespace where the addon resides.")
+    namespace: str = Field(
+        default="kube-system",
+        description="Namespace where the addon resides.",
+    )
     chart: str | None = Field(
         default=None,
         description="Helm chart name, if managed by Helm.",
