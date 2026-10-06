@@ -42,5 +42,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Result caching for cluster description and add-on version compatibility matrices.
 - Non-fatal error aggregation tracking API issues without breaking partial inventory collection.
 - Comprehensive unit test suites in `tests/unit/providers/test_base.py` and `tests/unit/providers/eks/test_provider.py`.
+- `classify_node` and compute architecture classification in `kua.providers.eks.compute` detecting Managed Node Groups, Karpenter NodePools/provisioners, Fargate profiles, EKS Auto Mode, and self-managed groups (via `alpha.eksctl.io/nodegroup-name` or EC2 ASG tag lookup).
+- Operating system detection for Linux, Windows, and Bottlerocket OS, plus normalized kubelet version extraction via `MinorVersion`.
+- Karpenter CRD detection (`nodepools.karpenter.sh`, `provisioners.karpenter.sh`) via `ApiextensionsV1Api` storing installation status in compute evidence.
+- Discovery of EKS Fargate profiles independent of active pod allocations.
+- Integration of live node inspection into `EksProvider.list_node_groups` aggregating per-group kubelet version distributions, instance types, and availability zones.
+- Test fixture node datasets under `tests/fixtures/nodes/` covering managed, Karpenter, Fargate, Auto Mode, self-managed, mixed-version, Windows, and Bottlerocket nodes.
+- Comprehensive unit test suite in `tests/unit/providers/eks/test_compute.py`.
 
 

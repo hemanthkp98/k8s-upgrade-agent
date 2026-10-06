@@ -1,0 +1,45 @@
+[
+  {
+    "apiVersion": "v1",
+    "kind": "Node",
+    "metadata": {
+      "name": "ip-10-0-5-10.ec2.internal",
+      "labels": {
+        "alpha.eksctl.io/nodegroup-name": "self-managed-eksctl",
+        "topology.kubernetes.io/zone": "us-west-2a",
+        "node.kubernetes.io/instance-type": "t3.large"
+      }
+    },
+    "spec": {
+      "providerID": "aws:///us-west-2a/i-06666666666666666"
+    },
+    "status": {
+      "nodeInfo": {
+        "operatingSystem": "linux",
+        "osImage": "Amazon Linux 2",
+        "kubeletVersion": "v1.30.2"
+      }
+    }
+  },
+  {
+    "apiVersion": "v1",
+    "kind": "Node",
+    "metadata": {
+      "name": "ip-10-0-5-20.ec2.internal",
+      "labels": {
+        "topology.kubernetes.io/zone": "us-west-2c",
+        "node.kubernetes.io/instance-type": "t3.xlarge"
+      }
+    },
+    "spec": {
+      "providerID": "aws:///us-west-2c/i-07777777777777777"
+    },
+    "status": {
+      "nodeInfo": {
+        "operatingSystem": "linux",
+        "osImage": "Ubuntu 22.04 LTS",
+        "kubeletVersion": "v1.30.2"
+      }
+    }
+  }
+]

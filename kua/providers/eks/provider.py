@@ -12,6 +12,15 @@ from kua.core.models import AddonInfo, ClusterRef, NodeGroupInfo
 from kua.core.versions import MinorVersion
 from kua.providers.base import Provider
 from kua.providers.eks.auth import build_k8s_api_client
+from kua.providers.eks.compute import (
+    _get_field,
+    detect_karpenter_crds,
+    discover_compute_inventory,
+    extract_instance_id,
+    list_cluster_fargate_profiles,
+    list_cluster_nodes,
+    resolve_asg_names,
+)
 from kua.providers.eks.session import caller_identity, make_boto_session
 
 
@@ -24,17 +33,24 @@ class EksProvider(Provider):
         self,
         settings: KuaSettings,
         session: boto3.Session | None = None,
+        k8s_client: ApiClient | None = None,
+        auto_k8s: bool | None = None,
     ) -> None:
         """Initialize the EKS provider with configuration and an optional boto3 session.
 
         Args:
             settings: Active KuaSettings.
             session: Optional pre-configured boto3.Session. If None, created via make_boto_session.
+            k8s_client: Optional pre-configured Kubernetes ApiClient.
+            auto_k8s: Whether to automatically construct a Kubernetes ApiClient if none provided.
+                      Defaults to True when session is None, False when session is provided.
         """
         self.settings = settings
         self.cluster_name = settings.cluster.name
         self.region = settings.cluster.region
         self.account_id = settings.cluster.account_id
+        self._k8s_client = k8s_client
+        self._auto_k8s = auto_k8s if auto_k8s is not None else (session is None)
 
         if session is not None:
             self.session = session
@@ -48,6 +64,7 @@ class EksProvider(Provider):
         self.errors: list[str] = []
         self._cluster_describe_cache: dict[str, Any] | None = None
         self._addon_compat_cache: dict[tuple[str, str], list[str]] = {}
+        self.compute_evidence: dict[str, Any] = {}
 
     def _describe_cluster(self) -> dict[str, Any]:
         """Fetch and cache EKS describe_cluster output."""
@@ -97,10 +114,13 @@ class EksProvider(Provider):
         val = cluster.get("platformVersion")
         return str(val) if val else None
 
-    def list_node_groups(self) -> list[NodeGroupInfo]:
-        """List and describe managed node groups in the EKS cluster."""
+    def list_node_groups(
+        self,
+        k8s_client: ApiClient | None = None,
+    ) -> list[NodeGroupInfo]:
+        """List and classify node groups across compute architectures and pools."""
         paginator = self.eks_client.get_paginator("list_nodegroups")
-        groups: list[NodeGroupInfo] = []
+        managed_groups: list[NodeGroupInfo] = []
 
         try:
             pages = paginator.paginate(clusterName=self.cluster_name)
@@ -142,7 +162,7 @@ class EksProvider(Provider):
                             elif "BOTTLEROCKET" in ami_upper:
                                 os_family = "bottlerocket"
 
-                        groups.append(
+                        managed_groups.append(
                             NodeGroupInfo(
                                 name=ng_name,
                                 kind="managed",
@@ -164,7 +184,81 @@ class EksProvider(Provider):
         except ClientError as e:
             self.errors.append(f"Failed to list EKS nodegroups: {e}")
 
-        return groups
+        # Resolve Kubernetes client for live node classification
+        client = k8s_client or self._k8s_client
+        if client is None and self._auto_k8s:
+            try:
+                client = self.k8s_api_client()
+            except Exception as e:
+                self.errors.append(f"Failed to connect to Kubernetes API: {e}")
+
+        if client is None:
+            # If no Kubernetes API connection is available, return managed node groups
+            return managed_groups
+
+        # Discover Fargate profiles
+        fargate_profiles: list[str] = []
+        try:
+            fargate_profiles = list_cluster_fargate_profiles(
+                self.eks_client,
+                self.cluster_name,
+            )
+        except Exception as e:
+            self.errors.append(f"Failed to list Fargate profiles: {e}")
+
+        # List live nodes
+        nodes: list[Any] = []
+        try:
+            nodes = list_cluster_nodes(client)
+        except Exception as e:
+            self.errors.append(f"Failed to list Kubernetes nodes: {e}")
+
+        # Detect Karpenter CRDs
+        karpenter_evidence: dict[str, Any] = {"installed": False, "crd": None}
+        try:
+            karpenter_evidence = detect_karpenter_crds(client)
+        except Exception as e:
+            self.errors.append(f"Failed to detect Karpenter CRDs: {e}")
+
+        # Identify self-managed instance IDs requiring ASG lookup
+        unlabelled_instance_ids: list[str] = []
+        for node in nodes:
+            metadata = _get_field(node, "metadata") or {}
+            labels = _get_field(metadata, "labels") or {}
+            if (
+                "eks.amazonaws.com/compute-type" not in labels
+                and "eks.amazonaws.com/nodegroup" not in labels
+                and "karpenter.sh/nodepool" not in labels
+                and "karpenter.sh/provisioner-name" not in labels
+                and "alpha.eksctl.io/nodegroup-name" not in labels
+            ):
+                spec = _get_field(node, "spec") or {}
+                provider_id = _get_field(spec, "provider_id") or _get_field(spec, "providerID")
+                inst_id = extract_instance_id(provider_id)
+                if inst_id:
+                    unlabelled_instance_ids.append(inst_id)
+
+        asg_map: dict[str, str] = {}
+        if unlabelled_instance_ids:
+            try:
+                asg_map = resolve_asg_names(
+                    self.session,
+                    self.region,
+                    unlabelled_instance_ids,
+                )
+            except Exception as e:
+                self.errors.append(f"Failed to resolve EC2 ASG names: {e}")
+
+        # Merge managed node group facts with live nodes
+        all_groups, evidence = discover_compute_inventory(
+            managed_groups=managed_groups,
+            nodes=nodes,
+            fargate_profiles=fargate_profiles,
+            asg_map=asg_map,
+            karpenter_evidence=karpenter_evidence,
+        )
+        self.compute_evidence = evidence
+        return all_groups
 
     def list_provider_addons(self) -> list[AddonInfo]:
         """List managed add-ons installed on the EKS cluster."""

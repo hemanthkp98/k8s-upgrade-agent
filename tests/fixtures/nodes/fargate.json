@@ -1,0 +1,24 @@
+[
+  {
+    "apiVersion": "v1",
+    "kind": "Node",
+    "metadata": {
+      "name": "fargate-ip-10-0-3-10.ec2.internal",
+      "labels": {
+        "eks.amazonaws.com/compute-type": "fargate",
+        "eks.amazonaws.com/fargate-profile": "fp-workloads",
+        "topology.kubernetes.io/zone": "us-west-2a"
+      }
+    },
+    "spec": {
+      "providerID": "aws:///us-west-2a/fargate-i-04444444444444444"
+    },
+    "status": {
+      "nodeInfo": {
+        "operatingSystem": "linux",
+        "osImage": "Amazon Linux 2",
+        "kubeletVersion": "v1.30.2-eks-ba1234"
+      }
+    }
+  }
+]
